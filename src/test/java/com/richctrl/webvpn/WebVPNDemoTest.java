@@ -1,9 +1,10 @@
 package com.richctrl.webvpn;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+
+import java.util.HashMap;
 
 public class WebVPNDemoTest {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -14,9 +15,9 @@ public class WebVPNDemoTest {
 
         ConnectorResponseDTO responseDTO = connector.getApi(
             WebVPNConnector.USER_EXISTS_API,
-            ImmutableMap.of(
-            "username", "admin"
-        ));
+            new HashMap<String, Object>(){{
+                put("username", "admin");
+            }});
         LOGGER.info("result = {}", responseDTO);
     }
 }
