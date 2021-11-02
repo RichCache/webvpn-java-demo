@@ -22,12 +22,12 @@ import java.security.Key;
 import java.util.Date;
 import java.util.Map;
 
-public class WebVPNDemo {
+public class WebVPNConnector {
     private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
     private final Key signingKey;
     private final String endpoint;
 
-    public WebVPNDemo(String secretKey, String endpoint) {
+    public WebVPNConnector(String secretKey, String endpoint) {
          this.signingKey = new SecretKeySpec(secretKey.getBytes(), SIGNATURE_ALGORITHM.getJcaName());
          this.endpoint = endpoint;
     }
@@ -41,30 +41,47 @@ public class WebVPNDemo {
                 .setIssuedAt(now)
                 .signWith(SIGNATURE_ALGORITHM, this.signingKey);
 
-        //Builds the JWT and serializes it to a compact, URL-safe string
         return builder.compact();
+    }
+
+    private ConnectorResponseDTO parseResponse(HttpResponse response) throws ConnectorException, IOException {
+        String json = EntityUtils.toString(response.getEntity());
+
+        ConnectorResponseDTO responseDTO = new Gson().fromJson(json, ConnectorResponseDTO.class);
+        if (!"success".equals(responseDTO.getStatus())) {
+            throw new Gson().fromJson(json, ConnectorException.class);
+        }
+
+        return responseDTO;
     }
 
     public static final String USER_EXISTS_API = "/api/connector/user/exists";
 
-    public ConnectorResponseDTO postApi(String api, String jwt) throws IOException {
+    public ConnectorResponseDTO postApi(String api, String jwt) throws IOException, ConnectorException {
         HttpClient client = HttpClientBuilder.create().build();
         HttpPost post = new HttpPost(this.endpoint + api);
         HttpEntity entity = new ByteArrayEntity(jwt.getBytes(StandardCharsets.UTF_8));
         post.setEntity(entity);
         HttpResponse response = client.execute(post);
-        String json = EntityUtils.toString(response.getEntity());
-        return new Gson().fromJson(json, ConnectorResponseDTO.class);
+
+        return parseResponse(response);
     }
 
-    public ConnectorResponseDTO getApi(String api, String jwt) throws IOException, URISyntaxException {
+    public ConnectorResponseDTO getApi(String api, String jwt) throws IOException, URISyntaxException, ConnectorException {
         HttpClient client = HttpClientBuilder.create().build();
         URIBuilder builder = new URIBuilder(this.endpoint + api);
         builder.setParameter("payload", jwt);
         HttpGet get = new HttpGet(builder.build());
         HttpResponse response = client.execute(get);
 
-        String json = EntityUtils.toString(response.getEntity());
-        return new Gson().fromJson(json, ConnectorResponseDTO.class);
+        return parseResponse(response);
+    }
+
+    public ConnectorResponseDTO getApi(String api, Map<String, Object> claims) throws IOException, URISyntaxException, ConnectorException {
+        return getApi(api, createJWT(claims));
+    }
+
+    public ConnectorResponseDTO postApi(String api, Map<String, Object> claims) throws IOException, ConnectorException {
+        return postApi(api, createJWT(claims));
     }
 }
