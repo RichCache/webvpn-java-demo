@@ -1,5 +1,6 @@
 package com.richctrl.webvpn;
 
+import com.google.gson.Gson;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -46,21 +47,24 @@ public class WebVPNDemo {
 
     public static final String USER_EXISTS_API = "/api/connector/user/exists";
 
-    public String postApi(String api, String jwt) throws IOException {
+    public ConnectorResponseDTO postApi(String api, String jwt) throws IOException {
         HttpClient client = HttpClientBuilder.create().build();
         HttpPost post = new HttpPost(this.endpoint + api);
         HttpEntity entity = new ByteArrayEntity(jwt.getBytes(StandardCharsets.UTF_8));
         post.setEntity(entity);
         HttpResponse response = client.execute(post);
-        return EntityUtils.toString(response.getEntity());
+        String json = EntityUtils.toString(response.getEntity());
+        return new Gson().fromJson(json, ConnectorResponseDTO.class);
     }
 
-    public String getApi(String api, String jwt) throws IOException, URISyntaxException {
+    public ConnectorResponseDTO getApi(String api, String jwt) throws IOException, URISyntaxException {
         HttpClient client = HttpClientBuilder.create().build();
         URIBuilder builder = new URIBuilder(this.endpoint + api);
         builder.setParameter("payload", jwt);
         HttpGet get = new HttpGet(builder.build());
         HttpResponse response = client.execute(get);
-        return EntityUtils.toString(response.getEntity());
+
+        String json = EntityUtils.toString(response.getEntity());
+        return new Gson().fromJson(json, ConnectorResponseDTO.class);
     }
 }

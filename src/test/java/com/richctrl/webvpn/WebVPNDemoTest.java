@@ -19,7 +19,7 @@ public class WebVPNDemoTest {
         String jwt = webVPNDemo.createJWT(claims);
         LOGGER.info("jwt = `{}`", jwt);
 
-        String response = webVPNDemo.getApi(WebVPNDemo.USER_EXISTS_API, jwt);
-        LOGGER.info("result = {}", response);
+        ConnectorResponseDTO responseDTO = webVPNDemo.getApi(WebVPNDemo.USER_EXISTS_API, jwt);
+        LOGGER.info("result = {}", responseDTO);
     }
 }
